@@ -15,30 +15,31 @@ export default function AttendanceMarking({ route, navigation }: Props) {
   const { classId, className } = route.params || {};
   const { teacher } = useContext(AuthContext);
 
+  if (classId === undefined) {
+    throw new Error('classId is required for AttendanceMarking screen');
+  }
+
   const [students, setStudents] = useState<Student[]>([]);
   const [attendance, setAttendance] = useState<Record<number, AttendanceStatus>>({});
   const [loading, setLoading] = useState(true);
 
-  // 🎨 Define colors per status
   const statusColors: Record<AttendanceStatus, string> = {
-    present: '#4CAF50', // green
-    absent: '#F28B82',  // light red
-    late: '#FDD663',    // amber
-    leave: '#A7C7E7',   // light blue
+    present: '#4CAF50',
+    absent: '#F28B82',
+    late: '#FDD663',
+    leave: '#A7C7E7',
   };
 
   useEffect(() => {
     const loadStudents = async () => {
       try {
         const res = await fetchStudents();
-        const classStudents = res.data.filter(
-          (s: Student) => s.schoolClass && s.schoolClass.id === classId
-        );
+        // ✅ Explicitly type `s` as Student
+        const classStudents = res.data.filter((s: Student) => s.schoolClass?.id === classId);
         setStudents(classStudents);
 
-        // Default everyone to "present"
         const initial: Record<number, AttendanceStatus> = {};
-        classStudents.forEach((s) => (initial[s.id] = 'present'));
+        classStudents.forEach((s: Student) => (initial[s.id] = 'present'));
         setAttendance(initial);
       } catch (err) {
         console.error(err);
@@ -51,15 +52,16 @@ export default function AttendanceMarking({ route, navigation }: Props) {
   }, [classId]);
 
   const toggleStatus = (studentId: number, status: AttendanceStatus) => {
-    setAttendance((prev) => ({ ...prev, [studentId]: status }));
+    setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
 
   const handleSubmit = async () => {
     try {
       for (const student of students) {
+        // ✅ Ensure classId and teacherId are defined
         await postAttendance({
           studentId: student.id,
-          schoolClassId: classId,
+          schoolClassId: classId, // classId is guaranteed to exist
           teacherId: teacher?.id,
           status: attendance[student.id],
         });
@@ -94,7 +96,7 @@ export default function AttendanceMarking({ route, navigation }: Props) {
         <FlatList
           data={students}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: Student }) => (
             <View style={globalStyles.card}>
               <Text style={globalStyles.textPrimary}>
                 {item.firstName} {item.lastName} ({item.admissionNumber})

@@ -17,13 +17,6 @@ type AttendanceRecord = {
   classId: number;
   date: string;
   className: string;
-  subject: string;
-  teacher: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
   present: number;
   absent: number;
   late?: number;
@@ -34,27 +27,20 @@ export default function AttendanceScreen() {
   const navigation = useNavigation<AttendanceScreenNavigationProp>();
   const { teacher } = useContext(AuthContext);
 
-  const [classes, setClasses] = useState<any[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
-
-  useEffect(() => {
-    if (teacher) {
-      setClasses(teacher.schoolClasses || []);
-    }
-  }, [teacher]);
 
   const loadHistory = useCallback(async () => {
     try {
       if (!teacher?.id) return;
       const res = await fetchAttendanceHistory(teacher.id);
 
-      const formatted = res.data.map((rec: any) => {
+      const formatted: AttendanceRecord[] = res.data.map((rec: any) => {
         const dt = new Date(rec.date);
         const dateStr = dt.toISOString().slice(0, 10);
         const timeStr = dt.toTimeString().slice(0, 5);
         return {
           id: rec.id,
-          classId: rec.classId, // ensure we have classId
+          classId: rec.classId,
           date: `${dateStr} ${timeStr}`,
           className: rec.className,
           present: rec.present,
@@ -73,14 +59,6 @@ export default function AttendanceScreen() {
     loadHistory();
   }, [loadHistory]);
 
-  const handleMarkAttendance = (cls: { id: number; name: string }) => {
-    navigation.navigate('AttendanceMarking', {
-      classId: cls.id,
-      className: cls.name,
-      mode: 'new',
-    });
-  };
-
   const handleViewAttendance = (record: AttendanceRecord) => {
     navigation.navigate('AttendanceDetails', {
       classId: record.classId,
@@ -95,63 +73,36 @@ export default function AttendanceScreen() {
   return (
     <View style={globalStyles.container}>
       <Text style={[globalStyles.textPrimary, { fontSize: 20, marginBottom: 16 }]}>
-        Attendance
+        Attendance History
       </Text>
 
       <RefreshableFlatList
-        data={classes}
+        data={attendanceHistory}
         onReload={loadHistory}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
+        keyExtractor={(item: AttendanceRecord) => item.id.toString()}
+        renderItem={({ item }: { item: AttendanceRecord }) => (
           <View style={globalStyles.card}>
-            <Text style={globalStyles.textPrimary}>{item.name}</Text>
-            <Button
-              title="Mark Attendance"
-              onPress={() => handleMarkAttendance(item)}
-              style={{ marginTop: 8 }}
-            />
+            <Text style={globalStyles.textPrimary}>
+              {item.className} - {item.date}
+            </Text>
+            <Text style={globalStyles.textSecondary}>
+              Present: {item.present} | Absent: {item.absent}
+            </Text>
+
+            <View style={{ flexDirection: 'row', marginTop: 8 }}>
+              <Button
+                title="Export & Send"
+                onPress={() => handleExportAttendance(item)}
+                style={{ flex: 1, marginRight: 6 }}
+              />
+              <Button
+                title="View Attendance"
+                onPress={() => handleViewAttendance(item)}
+                style={{ flex: 1, marginLeft: 6 }}
+              />
+            </View>
           </View>
         )}
-        ListFooterComponent={
-          <>
-            <Text
-              style={[
-                globalStyles.textPrimary,
-                { fontSize: 18, marginVertical: 16, fontWeight: 'bold' },
-              ]}
-            >
-              History / Export
-            </Text>
-            <RefreshableFlatList
-              data={attendanceHistory}
-              onReload={loadHistory}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <View style={globalStyles.card}>
-                  <Text style={globalStyles.textPrimary}>
-                    {item.className} - {item.date}
-                  </Text>
-                  <Text style={globalStyles.textSecondary}>
-                    Present: {item.present} | Absent: {item.absent}
-                  </Text>
-
-                  <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                    <Button
-                      title="Export & Send"
-                      onPress={() => handleExportAttendance(item)}
-                      style={{ flex: 1, marginRight: 6 }}
-                    />
-                    <Button
-                      title="View Attendance"
-                      onPress={() => handleViewAttendance(item)}
-                      style={{ flex: 1, marginLeft: 6 }}
-                    />
-                  </View>
-                </View>
-              )}
-            />
-          </>
-        }
       />
     </View>
   );

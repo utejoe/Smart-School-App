@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import Tabs from './src/navigation/Tabs';
 import AttendanceMarking from './src/screens/AttendanceMarking';
-import AttendanceDetails from './src/screens/AttendanceDetails'; // 👈 NEW
+import AttendanceDetails from './src/screens/AttendanceDetails';
 import StudentDetails from './src/screens/StudentDetails';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -18,7 +18,13 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Tabs: undefined;
-  AttendanceMarking: { classId: number; className: string } | undefined;
+  AttendanceMarking: {
+    classId: number;
+    className: string;
+    mode?: 'new' | 'edit';
+    subjectId?: number;
+    subjectName?: string;
+  };
   StudentDetails: { studentId: number };
   AttendanceDetails: { classId: number; date: string };
 };
@@ -47,7 +53,7 @@ export default function App() {
           <Stack.Screen
             name="AttendanceDetails"
             component={AttendanceDetails}
-            options={{ headerShown: true, title: 'Attendance Details' }} // ✅ NEW
+            options={{ headerShown: true, title: 'Attendance Details' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

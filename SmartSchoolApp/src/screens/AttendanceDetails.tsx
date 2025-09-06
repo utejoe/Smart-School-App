@@ -21,12 +21,10 @@ export default function AttendanceDetails() {
   const route = useRoute<AttendanceDetailsRouteProp>();
   const { classId, date } = route.params;
 
-  console.log('[DEBUG] route.params:', route.params);
-
   const [students, setStudents] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<Record<number, AttendanceStatus>>({});
   const [className, setClassName] = useState('');
-  const [sessionDate, setSessionDate] = useState('');
+  const [sessionDate, setSessionDate] = useState(''); // renamed to avoid duplicate
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
@@ -39,13 +37,10 @@ export default function AttendanceDetails() {
 
   useEffect(() => {
     const loadDetails = async () => {
-      console.log('[DEBUG] Loading attendance for classId:', classId, 'date:', date);
       try {
         const res = await fetchAttendanceSession(classId, date); 
-        console.log('[DEBUG] fetchAttendanceSession response:', res);
 
         const data = res.data;
-        console.log('[DEBUG] attendance data:', data);
 
         setClassName(data.schoolClass?.name || '');
         setSessionDate(new Date(data.date).toLocaleString());
@@ -56,14 +51,11 @@ export default function AttendanceDetails() {
           initial[s.id] = s.status as AttendanceStatus;
         });
         setAttendance(initial);
-
-        console.log('[DEBUG] initial attendance state:', initial);
       } catch (err) {
-        console.error('[ERROR] Failed to load attendance details:', err);
+        console.error(err);
         Alert.alert('Error', 'Failed to load attendance details.');
       } finally {
         setLoading(false);
-        console.log('[DEBUG] Loading finished');
       }
     };
 
@@ -71,22 +63,19 @@ export default function AttendanceDetails() {
   }, [classId, date]);
 
   const toggleStatus = (studentId: number, status: AttendanceStatus) => {
-    console.log('[DEBUG] Toggling status for studentId:', studentId, 'to:', status);
     if (!editMode) return;
     setAttendance((prev) => ({ ...prev, [studentId]: status }));
   };
 
   const handleSave = async () => {
-    console.log('[DEBUG] Saving attendance...', attendance);
     try {
       for (const studentId of Object.keys(attendance)) {
-        console.log('[DEBUG] Updating studentId:', studentId, 'with status:', attendance[Number(studentId)]);
         await updateAttendance(Number(studentId), { status: attendance[Number(studentId)] });
       }
       Alert.alert('✅ Success', 'Attendance updated!');
       setEditMode(false);
     } catch (err) {
-      console.error('[ERROR] Failed to update attendance:', err);
+      console.error(err);
       Alert.alert('Error', 'Failed to update attendance.');
     }
   };

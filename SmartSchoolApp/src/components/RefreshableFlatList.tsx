@@ -1,16 +1,15 @@
 // SmartSchoolApp/src/components/RefreshableFlatList.tsx
 import React, { useState, useCallback } from 'react';
-import { FlatList, RefreshControl } from 'react-native';
+import { FlatList, RefreshControl, FlatListProps } from 'react-native';
 
-type RefreshableFlatListProps = {
-  onReload: () => Promise<void> | void; // function to call when refreshing
-  [key: string]: any; // pass all other FlatList props
+type RefreshableFlatListProps<T> = FlatListProps<T> & {
+  onReload: () => Promise<void> | void;
 };
 
-export default function RefreshableFlatList({
+export default function RefreshableFlatList<T>({
   onReload,
   ...rest
-}: RefreshableFlatListProps) {
+}: RefreshableFlatListProps<T>) {
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -25,9 +24,7 @@ export default function RefreshableFlatList({
   return (
     <FlatList
       {...rest}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     />
   );
 }
