@@ -1,0 +1,79 @@
+# -------------------------
+# Node / Expo / React Native
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# React Native
+android/.gradle/
+android/app/build/
+android/build/
+ios/Pods/
+ios/build/
+*.xcuserdata
+*.xcuserstate
+*.xcworkspace
+*.xcuserdatad
+*.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# -------------------------
+# Backend (Node/Express)
+# -------------------------
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/package-lock.json
+backend/yarn.lock
+
+# Logs
+logs
+*.log
+backend/debug.log
+backend/error.log
+
+# Environment & sensitive files
+.env
+backend/.env
+backend/user_password.txt
+backend/sql_command.txt
+
+# Uploads (runtime generated files)
+backend/uploads/
+
+# -------------------------
+# Plans, notes, and scripts
+# -------------------------
+backend/backend_plan.txt
+smart_school_app_dev_plan.md
+smart-school-structure.txt
+generate_tree.py
+
+# -------------------------
+# General OS / IDE junk
+# -------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# VSCode / JetBrains
+.vscode/
+.idea/
+*.iml
