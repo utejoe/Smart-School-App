@@ -40,6 +40,7 @@ export const postAttendance = (payload: {
   studentId: number;
   schoolClassId: number;
   teacherId?: number;
+  subjectId?: number;  // ✅ add this
   status: 'present' | 'absent' | 'late' | 'leave';
 }) => api.post('/attendance', payload);
 

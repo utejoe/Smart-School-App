@@ -15,8 +15,10 @@ type AttendanceScreenNavigationProp = NativeStackNavigationProp<RootStackParamLi
 type AttendanceRecord = {
   id: number;
   classId: number;
-  date: string;
   className: string;
+  subjectId?: number;
+  subjectName?: string;
+  date: string;
   present: number;
   absent: number;
   late?: number;
@@ -31,26 +33,48 @@ export default function AttendanceScreen() {
 
   const loadHistory = useCallback(async () => {
     try {
-      if (!teacher?.id) return;
+      if (!teacher?.id) {
+        console.warn("[DEBUG] Teacher not found in context");
+        return;
+      }
+
+      console.log("[DEBUG] Fetching attendance history for teacherId:", teacher.id);
+
       const res = await fetchAttendanceHistory(teacher.id);
 
-      const formatted: AttendanceRecord[] = res.data.map((rec: any) => {
+      console.log("[DEBUG] Raw API Response:", JSON.stringify(res.data, null, 2));
+
+      const formatted: AttendanceRecord[] = res.data.map((rec: any, idx: number) => {
         const dt = new Date(rec.date);
         const dateStr = dt.toISOString().slice(0, 10);
         const timeStr = dt.toTimeString().slice(0, 5);
+
+        console.log(
+          `[DEBUG] Mapping record ${idx}:`,
+          "className:", rec.className,
+          "subjectName:", rec.subjectName,
+          "subjectId:", rec.subjectId
+        );
+
         return {
-          id: rec.id,
+          id: rec.id || idx + 1,
           classId: rec.classId,
-          date: `${dateStr} ${timeStr}`,
           className: rec.className,
+          subjectId: rec.subjectId,
+          subjectName: rec.subjectName,
+          date: `${dateStr} ${timeStr}`,
           present: rec.present,
           absent: rec.absent,
+          late: rec.late ?? 0,
+          leave: rec.leave ?? 0,
         };
       });
 
+      console.log("[DEBUG] Formatted Records:", formatted);
+
       setAttendanceHistory(formatted);
     } catch (err) {
-      console.error(err);
+      console.error("[DEBUG] Error fetching attendance history:", err);
       Alert.alert('Error', 'Failed to load attendance history.');
     }
   }, [teacher]);
@@ -60,6 +84,7 @@ export default function AttendanceScreen() {
   }, [loadHistory]);
 
   const handleViewAttendance = (record: AttendanceRecord) => {
+    console.log("[DEBUG] Navigating to AttendanceDetails with:", record);
     navigation.navigate('AttendanceDetails', {
       classId: record.classId,
       date: record.date,
@@ -67,6 +92,7 @@ export default function AttendanceScreen() {
   };
 
   const handleExportAttendance = (record: AttendanceRecord) => {
+    console.log("[DEBUG] Export pressed for:", record);
     Alert.alert('Export', `Attendance for ${record.className} on ${record.date} exported!`);
   };
 
@@ -83,10 +109,13 @@ export default function AttendanceScreen() {
         renderItem={({ item }: { item: AttendanceRecord }) => (
           <View style={globalStyles.card}>
             <Text style={globalStyles.textPrimary}>
-              {item.className} - {item.date}
+              {item.className} - {item.subjectName ?? 'No Subject'}
             </Text>
             <Text style={globalStyles.textSecondary}>
-              Present: {item.present} | Absent: {item.absent}
+              {item.date}
+            </Text>
+            <Text style={globalStyles.textSecondary}>
+              Present: {item.present} | Absent: {item.absent} | Late: {item.late} | Leave: {item.leave}
             </Text>
 
             <View style={{ flexDirection: 'row', marginTop: 8 }}>

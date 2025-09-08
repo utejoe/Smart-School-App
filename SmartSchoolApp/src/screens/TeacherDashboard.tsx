@@ -37,16 +37,16 @@ export default function TeacherDashboard() {
   }, [teacher]);
 
   const handleGoToAttendance = () => {
-    if (!selectedClass) {
-      Alert.alert('Error', 'Please select a class first.');
+    if (!selectedClass || !selectedSubject) {
+      Alert.alert('Error', 'Please select both a class and a subject before proceeding.');
       return;
     }
 
     navigation.navigate('AttendanceMarking', {
       classId: selectedClass,
       className: classes.find((c) => c.id === selectedClass)?.name || '',
-      subjectId: selectedSubject ?? undefined,
-      subjectName: subjects.find((s) => s.id === selectedSubject)?.name,
+      subjectId: selectedSubject,
+      subjectName: subjects.find((s) => s.id === selectedSubject)?.name || '',
       mode: 'new',
     });
   };

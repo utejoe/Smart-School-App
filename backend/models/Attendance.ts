@@ -1,8 +1,15 @@
 // backend/models/Attendance.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
 import { Student } from './Student';
 import { SchoolClass } from './SchoolClass';
 import { Teacher } from './Teacher';
+import { Subject } from './Subject';
 
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'leave';
 
@@ -17,8 +24,13 @@ export class Attendance {
   @ManyToOne(() => SchoolClass, { nullable: false })
   schoolClass!: SchoolClass;
 
-  @ManyToOne(() => Teacher, { nullable: true })
-  teacher?: Teacher; // Teacher who took attendance
+  // ✅ Link Attendance → Teacher (bidirectional with Teacher.attendances)
+  @ManyToOne(() => Teacher, (teacher) => teacher.attendances, { nullable: true })
+  teacher?: Teacher;
+
+  // ✅ Link Attendance → Subject
+  @ManyToOne(() => Subject, { nullable: true })
+  subject?: Subject;
 
   @Column({
     type: 'enum',

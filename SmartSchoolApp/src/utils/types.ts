@@ -25,10 +25,11 @@ export type AttendanceStatus = 'present' | 'absent' | 'late' | 'leave';
 
 
 export type AttendanceRecord = {
-id?: number;
-studentId: number;
-schoolClassId: number;
-teacherId?: number | null;
-status: AttendanceStatus;
-date?: string;
+  id?: number;
+  studentId: number;
+  schoolClassId: number;
+  subjectId?: number;
+  teacherId?: number | null;
+  status: AttendanceStatus;
+  date?: string;
 };

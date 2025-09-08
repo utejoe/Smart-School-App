@@ -1,13 +1,14 @@
-// controllers/attendanceController.ts
+// backend/controllers/attendanceController.ts
 import { Request, Response } from 'express';
 import { AppDataSource } from '../db';
 import { Attendance, AttendanceStatus } from '../models/Attendance';
 import { Student } from '../models/Student';
 import { SchoolClass } from '../models/SchoolClass';
 import { Teacher } from '../models/Teacher';
+import { Subject } from '../models/Subject';
 import { Between } from 'typeorm';
 
-// ✅ Get all attendance records (grouped by class + date)
+// ✅ Get all attendance records (grouped by class + subject + date)
 export const getAllAttendance = async (req: Request, res: Response) => {
   try {
     const { teacherId } = req.query;
@@ -16,8 +17,11 @@ export const getAllAttendance = async (req: Request, res: Response) => {
       .createQueryBuilder('attendance')
       .leftJoin('attendance.schoolClass', 'schoolClass')
       .leftJoin('attendance.teacher', 'teacher')
+      .leftJoin('attendance.subject', 'subject') // ✅ join subject
       .select('attendance.schoolClassId', 'classId')
       .addSelect('schoolClass.name', 'className')
+      .addSelect('subject.id', 'subjectId')
+      .addSelect('subject.name', 'subjectName')
       .addSelect("DATE_TRUNC('minute', attendance.date)", 'date')
       .addSelect(
         `SUM(CASE WHEN attendance.status = 'present' THEN 1 ELSE 0 END)`,
@@ -37,6 +41,8 @@ export const getAllAttendance = async (req: Request, res: Response) => {
       )
       .groupBy('attendance.schoolClassId')
       .addGroupBy('schoolClass.name')
+      .addGroupBy('subject.id')
+      .addGroupBy('subject.name')
       .addGroupBy("DATE_TRUNC('minute', attendance.date)")
       .orderBy("DATE_TRUNC('minute', attendance.date)", 'DESC');
 
@@ -50,6 +56,8 @@ export const getAllAttendance = async (req: Request, res: Response) => {
       id: idx + 1,
       classId: r.classId,
       className: r.className,
+      subjectId: r.subjectId,
+      subjectName: r.subjectName,
       date: r.date,
       present: Number(r.present),
       absent: Number(r.absent),
@@ -72,7 +80,7 @@ export const getAttendanceById = async (req: Request, res: Response) => {
 
     const record = await attendanceRepo.findOne({
       where: { id },
-      relations: ['student', 'schoolClass', 'teacher'],
+      relations: ['student', 'schoolClass', 'teacher', 'subject'],
     });
 
     if (!record) {
@@ -94,7 +102,7 @@ export const getAttendanceByStudent = async (req: Request, res: Response) => {
 
     const records = await repo.find({
       where: { student: { id: studentId } },
-      relations: ['student', 'schoolClass', 'teacher'],
+      relations: ['student', 'schoolClass', 'teacher', 'subject'],
       order: { date: 'DESC' },
     });
 
@@ -126,7 +134,7 @@ export const getAttendanceSession = async (req: Request, res: Response) => {
         schoolClass: { id: Number(classId) },
         date: Between(start, end),
       },
-      relations: ['student', 'schoolClass', 'teacher'],
+      relations: ['student', 'schoolClass', 'teacher', 'subject'],
       order: { student: { id: 'ASC' } },
     });
 
@@ -137,6 +145,7 @@ export const getAttendanceSession = async (req: Request, res: Response) => {
     res.json({
       schoolClass: records[0].schoolClass,
       teacher: records[0].teacher,
+      subject: records[0].subject, // ✅ include subject
       date: records[0].date,
       students: records.map((r) => ({
         id: r.student.id,
@@ -155,11 +164,12 @@ export const getAttendanceSession = async (req: Request, res: Response) => {
 // ✅ Create attendance record
 export const createAttendance = async (req: Request, res: Response) => {
   try {
-    const { studentId, schoolClassId, teacherId, status } = req.body;
+    const { studentId, schoolClassId, teacherId, subjectId, status } = req.body;
 
     const studentRepo = AppDataSource.getRepository(Student);
     const classRepo = AppDataSource.getRepository(SchoolClass);
     const teacherRepo = AppDataSource.getRepository(Teacher);
+    const subjectRepo = AppDataSource.getRepository(Subject);
     const attendanceRepo = AppDataSource.getRepository(Attendance);
 
     const student = await studentRepo.findOneBy({ id: studentId });
@@ -174,10 +184,17 @@ export const createAttendance = async (req: Request, res: Response) => {
       if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
     }
 
+    let subject: Subject | null = null;
+    if (subjectId) {
+      subject = await subjectRepo.findOneBy({ id: subjectId });
+      if (!subject) return res.status(404).json({ error: 'Subject not found' });
+    }
+
     const newRecord = attendanceRepo.create({
       student,
       schoolClass,
-      teacher: teacher || undefined, // convert null to undefined
+      teacher: teacher || undefined,
+      subject: subject || undefined,   // ✅ save subject
       status: (status as AttendanceStatus) || 'present',
       date: new Date(new Date().setSeconds(0, 0)),
     });
@@ -196,7 +213,7 @@ export const updateAttendance = async (req: Request, res: Response) => {
     const attendanceRepo = AppDataSource.getRepository(Attendance);
     const record = await attendanceRepo.findOne({
       where: { id: parseInt(req.params.id) },
-      relations: ['student', 'schoolClass', 'teacher'],
+      relations: ['student', 'schoolClass', 'teacher', 'subject'],
     });
     if (!record) return res.status(404).json({ error: 'Attendance record not found' });
 

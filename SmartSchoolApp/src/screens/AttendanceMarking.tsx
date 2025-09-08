@@ -12,11 +12,11 @@ import Button from '../components/Button';
 type Props = NativeStackScreenProps<RootStackParamList, 'AttendanceMarking'>;
 
 export default function AttendanceMarking({ route, navigation }: Props) {
-  const { classId, className } = route.params || {};
+  const { classId, className, subjectId, subjectName } = route.params || {};
   const { teacher } = useContext(AuthContext);
 
-  if (classId === undefined) {
-    throw new Error('classId is required for AttendanceMarking screen');
+  if (classId === undefined || subjectId === undefined) {
+    throw new Error('classId and subjectId are required for AttendanceMarking screen');
   }
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -34,10 +34,10 @@ export default function AttendanceMarking({ route, navigation }: Props) {
     const loadStudents = async () => {
       try {
         const res = await fetchStudents();
-        // ✅ Explicitly type `s` as Student
         const classStudents = res.data.filter((s: Student) => s.schoolClass?.id === classId);
         setStudents(classStudents);
 
+        // Default all students to "present"
         const initial: Record<number, AttendanceStatus> = {};
         classStudents.forEach((s: Student) => (initial[s.id] = 'present'));
         setAttendance(initial);
@@ -58,11 +58,11 @@ export default function AttendanceMarking({ route, navigation }: Props) {
   const handleSubmit = async () => {
     try {
       for (const student of students) {
-        // ✅ Ensure classId and teacherId are defined
         await postAttendance({
           studentId: student.id,
-          schoolClassId: classId, // classId is guaranteed to exist
-          teacherId: teacher?.id,
+          schoolClassId: classId,
+          subjectId: subjectId,       // ✅ include subject
+          teacherId: teacher?.id,     // ✅ include teacher
           status: attendance[student.id],
         });
       }
@@ -87,7 +87,7 @@ export default function AttendanceMarking({ route, navigation }: Props) {
   return (
     <View style={globalStyles.container}>
       <Text style={[globalStyles.textPrimary, { fontSize: 20, marginBottom: 16 }]}>
-        Mark Attendance for {className}
+        Mark Attendance for {className} - {subjectName}
       </Text>
 
       {students.length === 0 ? (
