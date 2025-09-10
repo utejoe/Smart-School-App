@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+frontend_plan.txt
+generate_web-tree.py
+school-web-structure.txt
+Web_Dev_Plan_Smart_School.md

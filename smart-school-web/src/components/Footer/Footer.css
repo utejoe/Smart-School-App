@@ -1,0 +1,10 @@
+.footer {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: var(--primary);
+  color: white;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: auto; /* push footer to bottom if layout uses flex */
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
